@@ -3,10 +3,7 @@ package com.olliego.project.controller;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.olliego.project.annotation.AuthCheck;
-import com.olliego.project.common.BaseResponse;
-import com.olliego.project.common.DeleteRequest;
-import com.olliego.project.common.ErrorCode;
-import com.olliego.project.common.ResultUtils;
+import com.olliego.project.common.*;
 import com.olliego.project.constant.CommonConstant;
 import com.olliego.project.exception.BusinessException;
 import com.olliego.project.model.dto.interfaceInfo.InterfaceInfoAddRequest;
@@ -123,6 +120,40 @@ public class InterfaceInfoController {
             throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
         }
         boolean result = interfaceInfoService.updateById(interfaceInfo);
+        return ResultUtils.success(result);
+    }
+
+    /**
+     * 上线
+     *
+     * @param param
+     * @param request
+     * @return
+     */
+    @PostMapping("/online")
+    @AuthCheck(mustRole = "online")
+    public BaseResponse<Boolean> updateInterfaceInfo(@RequestBody RestIdParam param,
+                                                     HttpServletRequest request) {
+        Long id = param.getId();
+
+
+        boolean result = true;
+        return ResultUtils.success(result);
+    }
+
+    /**
+     * 下线
+     *
+     * @param param
+     * @param request
+     * @return
+     */
+    @PostMapping("/offline")
+    @AuthCheck(mustRole = "admin")
+    public BaseResponse<Boolean> offline(@RequestBody RestIdParam param,
+                                                     HttpServletRequest request) {
+
+        boolean result = true;
         return ResultUtils.success(result);
     }
 
