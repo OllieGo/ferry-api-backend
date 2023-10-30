@@ -2,6 +2,7 @@ package com.olliego.project.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.olliego.ferryapiclientsdk.client.FerryApiClient;
 import com.olliego.project.annotation.AuthCheck;
 import com.olliego.project.common.*;
 import com.olliego.project.constant.CommonConstant;
@@ -11,6 +12,7 @@ import com.olliego.project.model.dto.interfaceInfo.InterfaceInfoQueryRequest;
 import com.olliego.project.model.dto.interfaceInfo.InterfaceInfoUpdateRequest;
 import com.olliego.project.model.entity.InterfaceInfo;
 import com.olliego.project.model.entity.User;
+import com.olliego.project.model.enums.InterfaceInfoStatusEnum;
 import com.olliego.project.service.InterfaceInfoService;
 import com.olliego.project.service.UserService;
 import lombok.extern.slf4j.Slf4j;
@@ -21,6 +23,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * 帖子接口
@@ -37,6 +40,9 @@ public class InterfaceInfoController {
 
     @Resource
     private UserService userService;
+
+    @Resource
+    private FerryApiClient ferryApiClient;
 
     // region 增删改查
 
@@ -131,14 +137,28 @@ public class InterfaceInfoController {
      * @return
      */
     @PostMapping("/online")
-    @AuthCheck(mustRole = "online")
-    public BaseResponse<Boolean> updateInterfaceInfo(@RequestBody RestIdParam param,
+    @AuthCheck(mustRole = "admin")
+    public BaseResponse<Boolean> onlineInterfaceInfo(@RequestBody RestIdParam param,
                                                      HttpServletRequest request) {
         Long id = param.getId();
+        InterfaceInfo dbInterfaceInfo = interfaceInfoService.getById(id);
+        if (Objects.isNull(dbInterfaceInfo)) {
+            throw new BusinessException(ErrorCode.NOT_FOUND_ERROR);
+        }
 
+        com.olliego.ferryapiclientsdk.model.User user = new com.olliego.ferryapiclientsdk.model.User();
+        user.setUsername("test");
+        String username = ferryApiClient.getUsernameByPost(user);
+        if (StringUtils.isBlank(username)) {
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "接口验证失败");
+        }
 
-        boolean result = true;
+        InterfaceInfo interfaceInfo = new InterfaceInfo();
+        interfaceInfo.setId(id);
+        interfaceInfo.setStatus(InterfaceInfoStatusEnum.ONLINE.getValue());
+        boolean result = interfaceInfoService.updateById(interfaceInfo);
         return ResultUtils.success(result);
+
     }
 
     /**
@@ -150,10 +170,18 @@ public class InterfaceInfoController {
      */
     @PostMapping("/offline")
     @AuthCheck(mustRole = "admin")
-    public BaseResponse<Boolean> offline(@RequestBody RestIdParam param,
+    public BaseResponse<Boolean> offlineInterfaceInfo(@RequestBody RestIdParam param,
                                                      HttpServletRequest request) {
+        Long id = param.getId();
+        InterfaceInfo dbInterfaceInfo = interfaceInfoService.getById(id);
+        if (Objects.isNull(dbInterfaceInfo)) {
+            throw new BusinessException(ErrorCode.NOT_FOUND_ERROR);
+        }
 
-        boolean result = true;
+        InterfaceInfo interfaceInfo = new InterfaceInfo();
+        interfaceInfo.setId(id);
+        interfaceInfo.setStatus(InterfaceInfoStatusEnum.OFFLINE.getValue());
+        boolean result = interfaceInfoService.updateById(interfaceInfo);
         return ResultUtils.success(result);
     }
 
